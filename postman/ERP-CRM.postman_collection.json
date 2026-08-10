@@ -1,0 +1,204 @@
+{
+  "info": {
+    "name": "ERP-CRM Portal",
+    "description": "## How to use role-specific tokens\n\n1. Run **Auth / Login (admin)** → copy the `token` from the response → paste into collection variable `token`.\n2. Run **Auth / Login (sales)** → copy token → paste into `salesToken`.\n3. Run **Auth / Login (warehouse)** → copy token → paste into `warehouseToken`.\n4. Run **Auth / Login (accounts)** → copy token → paste into `accountsToken`.\n5. After creating a customer, copy its `id` into `customerId`.\n6. After creating a product, copy its `id` into `productId`.\n7. After creating a challan, copy its `id` into `challanId`.\n8. To test the insufficient-stock 409 case: create a challan with `quantity` larger than the product's `current_stock`, copy that challan's `id` into `challanIdHighQty`, then run **Challans / Confirm challan (insufficient stock → 409)**.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base",           "value": "http://localhost:4000/api", "type": "string" },
+    { "key": "token",          "value": "", "type": "string", "description": "Admin JWT — set after running Login (admin)" },
+    { "key": "salesToken",     "value": "", "type": "string", "description": "Sales JWT — set after running Login (sales)" },
+    { "key": "warehouseToken", "value": "", "type": "string", "description": "Warehouse JWT — set after running Login (warehouse)" },
+    { "key": "accountsToken",  "value": "", "type": "string", "description": "Accounts JWT — set after running Login (accounts)" },
+    { "key": "customerId",     "value": "", "type": "string", "description": "Set after creating a customer" },
+    { "key": "productId",      "value": "", "type": "string", "description": "Set after creating a product" },
+    { "key": "challanId",      "value": "", "type": "string", "description": "Set after creating a challan" },
+    { "key": "challanIdHighQty", "value": "", "type": "string", "description": "Set to a draft challan whose item quantity exceeds available stock" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (admin)",
+          "request": { "method": "POST", "url": "{{base}}/auth/login", "header": [{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\"email\":\"admin@erp.com\",\"password\":\"Admin@123\"}" } }
+        },
+        {
+          "name": "Login (sales)",
+          "request": { "method": "POST", "url": "{{base}}/auth/login", "header": [{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\"email\":\"sales@erp.com\",\"password\":\"Sales@123\"}" } }
+        },
+        {
+          "name": "Login (warehouse)",
+          "request": { "method": "POST", "url": "{{base}}/auth/login", "header": [{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\"email\":\"warehouse@erp.com\",\"password\":\"Warehouse@123\"}" } }
+        },
+        {
+          "name": "Login (accounts)",
+          "request": { "method": "POST", "url": "{{base}}/auth/login", "header": [{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\"email\":\"accounts@erp.com\",\"password\":\"Accounts@123\"}" } }
+        },
+        {
+          "name": "Login (bad creds → 401)",
+          "request": { "method": "POST", "url": "{{base}}/auth/login", "header": [{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\"email\":\"admin@erp.com\",\"password\":\"wrong\"}" } }
+        },
+        {
+          "name": "Register (admin only → 201)",
+          "request": { "method": "POST", "url": "{{base}}/auth/register", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"New User\",\"email\":\"new@erp.com\",\"password\":\"Pass@123\",\"role\":\"sales\"}" } }
+        },
+        {
+          "name": "Register (sales token → 403)",
+          "request": { "method": "POST", "url": "{{base}}/auth/register", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{salesToken}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"X\",\"email\":\"x@erp.com\",\"password\":\"Pass@123\",\"role\":\"sales\"}" } }
+        },
+        {
+          "name": "Get Me",
+          "request": { "method": "GET", "url": "{{base}}/auth/me", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Get Me (no token → 401)",
+          "request": { "method": "GET", "url": "{{base}}/auth/me", "header": [] }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "List customers (admin)",
+          "request": { "method": "GET", "url": { "raw": "{{base}}/customers?page=1&limit=20", "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"}] }, "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "List customers (search + status filter)",
+          "request": { "method": "GET", "url": { "raw": "{{base}}/customers?search=test&status=active", "query": [{"key":"search","value":"test"},{"key":"status","value":"active"}] }, "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "List customers (warehouse token → 403)",
+          "request": { "method": "GET", "url": "{{base}}/customers", "header": [{"key":"Authorization","value":"Bearer {{warehouseToken}}"}] }
+        },
+        {
+          "name": "Create customer (→ 201)",
+          "request": { "method": "POST", "url": "{{base}}/customers", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"Test Corp\",\"mobile\":\"9876543210\",\"customer_type\":\"wholesale\",\"status\":\"lead\"}" } }
+        },
+        {
+          "name": "Create customer (missing mobile → 400)",
+          "request": { "method": "POST", "url": "{{base}}/customers", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"No Mobile\"}" } }
+        },
+        {
+          "name": "Get customer",
+          "request": { "method": "GET", "url": "{{base}}/customers/{{customerId}}", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Update customer (full body → 200)",
+          "request": { "method": "PUT", "url": "{{base}}/customers/{{customerId}}", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"Updated Corp\",\"mobile\":\"9876543210\",\"status\":\"active\"}" } }
+        },
+        {
+          "name": "Update customer (status only → 200)",
+          "request": { "method": "PUT", "url": "{{base}}/customers/{{customerId}}", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"status\":\"inactive\"}" } }
+        },
+        {
+          "name": "Get notes",
+          "request": { "method": "GET", "url": "{{base}}/customers/{{customerId}}/notes", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Add note",
+          "request": { "method": "POST", "url": "{{base}}/customers/{{customerId}}/notes", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"note\":\"Follow up done, interested in bulk order\"}" } }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List products",
+          "request": { "method": "GET", "url": "{{base}}/products", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "List low stock",
+          "request": { "method": "GET", "url": { "raw": "{{base}}/products?lowStock=true", "query": [{"key":"lowStock","value":"true"}] }, "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Create product (admin → 201)",
+          "request": { "method": "POST", "url": "{{base}}/products", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"Widget A\",\"sku\":\"SKU-001\",\"unit_price\":99.99,\"current_stock\":100,\"min_stock_alert\":10}" } }
+        },
+        {
+          "name": "Create product (duplicate SKU → 409)",
+          "request": { "method": "POST", "url": "{{base}}/products", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"Widget A Duplicate\",\"sku\":\"SKU-001\",\"unit_price\":50.00}" } }
+        },
+        {
+          "name": "Create product (sales token → 403)",
+          "request": { "method": "POST", "url": "{{base}}/products", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{salesToken}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"Widget B\",\"sku\":\"SKU-002\",\"unit_price\":10.00}" } }
+        },
+        {
+          "name": "Get product",
+          "request": { "method": "GET", "url": "{{base}}/products/{{productId}}", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Update product (no sku → 200)",
+          "request": { "method": "PUT", "url": "{{base}}/products/{{productId}}", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"name\":\"Widget A v2\",\"unit_price\":109.99}" } }
+        },
+        {
+          "name": "Stock log",
+          "request": { "method": "GET", "url": "{{base}}/products/{{productId}}/stock-log", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Stock adjust IN (warehouse → 201)",
+          "request": { "method": "POST", "url": "{{base}}/products/{{productId}}/stock-adjust", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{warehouseToken}}"}], "body": { "mode": "raw", "raw": "{\"quantity\":50,\"movement_type\":\"IN\",\"reason\":\"Restock\"}" } }
+        },
+        {
+          "name": "Stock adjust OUT (insufficient → 409)",
+          "request": { "method": "POST", "url": "{{base}}/products/{{productId}}/stock-adjust", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"quantity\":99999,\"movement_type\":\"OUT\",\"reason\":\"Test insufficient\"}" } }
+        },
+        {
+          "name": "Stock adjust (sales token → 403)",
+          "request": { "method": "POST", "url": "{{base}}/products/{{productId}}/stock-adjust", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{salesToken}}"}], "body": { "mode": "raw", "raw": "{\"quantity\":1,\"movement_type\":\"OUT\",\"reason\":\"Test\"}" } }
+        }
+      ]
+    },
+    {
+      "name": "Challans",
+      "item": [
+        {
+          "name": "List challans",
+          "request": { "method": "GET", "url": "{{base}}/challans", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "List challans (filter by status=draft)",
+          "request": { "method": "GET", "url": { "raw": "{{base}}/challans?status=draft", "query": [{"key":"status","value":"draft"}] }, "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "List challans (filter by customerId)",
+          "request": { "method": "GET", "url": { "raw": "{{base}}/challans?customerId={{customerId}}", "query": [{"key":"customerId","value":"{{customerId}}"}] }, "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Create challan (draft → 201)",
+          "request": { "method": "POST", "url": "{{base}}/challans", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"customer_id\":\"{{customerId}}\",\"items\":[{\"product_id\":\"{{productId}}\",\"quantity\":5}]}" } }
+        },
+        {
+          "name": "Get challan",
+          "request": { "method": "GET", "url": "{{base}}/challans/{{challanId}}", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Update challan (draft only → 200)",
+          "request": { "method": "PUT", "url": "{{base}}/challans/{{challanId}}", "header": [{"key":"Content-Type","value":"application/json"},{"key":"Authorization","value":"Bearer {{token}}"}], "body": { "mode": "raw", "raw": "{\"items\":[{\"product_id\":\"{{productId}}\",\"quantity\":10}]}" } }
+        },
+        {
+          "name": "Confirm challan (→ 200)",
+          "request": { "method": "POST", "url": "{{base}}/challans/{{challanId}}/confirm", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Confirm challan (insufficient stock → 409)",
+          "request": { "method": "POST", "url": "{{base}}/challans/{{challanIdHighQty}}/confirm", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Confirm challan (accounts token → 403)",
+          "request": { "method": "POST", "url": "{{base}}/challans/{{challanId}}/confirm", "header": [{"key":"Authorization","value":"Bearer {{accountsToken}}"}] }
+        },
+        {
+          "name": "Cancel challan (→ 200)",
+          "request": { "method": "POST", "url": "{{base}}/challans/{{challanId}}/cancel", "header": [{"key":"Authorization","value":"Bearer {{token}}"}] }
+        },
+        {
+          "name": "Cancel challan (warehouse token → 403)",
+          "request": { "method": "POST", "url": "{{base}}/challans/{{challanId}}/cancel", "header": [{"key":"Authorization","value":"Bearer {{warehouseToken}}"}] }
+        }
+      ]
+    }
+  ]
+}
