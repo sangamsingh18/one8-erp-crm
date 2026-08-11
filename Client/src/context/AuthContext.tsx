@@ -37,11 +37,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(u);
           localStorage.setItem('user', JSON.stringify(u));
         })
-        .catch(() => {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setToken(null);
-          setUser(null);
+        .catch((err) => {
+          // Only clear session if server explicitly returns 401 Unauthorized
+          if (err?.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setToken(null);
+            setUser(null);
+          }
         })
         .finally(() => setLoading(false));
     } else {
