@@ -30,8 +30,16 @@ const Products = () => {
     setLoading(true);
     try {
       const res = await productsApi.list({ page, limit: 20, search: search || undefined, lowStock: lowStock ? 'true' : undefined });
-      setProducts(res.data.data);
-      setMeta({ page: res.data.meta.page, totalPages: res.data.meta.totalPages, total: res.data.meta.total });
+      if (res?.data?.data) {
+        setProducts(res.data.data);
+        setMeta({ 
+          page: res.data.meta?.page || 1, 
+          totalPages: res.data.meta?.totalPages || 1, 
+          total: res.data.meta?.total || 0 
+        });
+      }
+    } catch {
+      setToast({ message: 'Failed to load products. Please check server connection.', type: 'error' });
     } finally { setLoading(false); }
   }, [search, lowStock]);
 
@@ -170,7 +178,7 @@ const Products = () => {
                     </td>
                   </tr>
                 )}
-                {products.map(p => (
+                {Array.isArray(products) && products.map(p => (
                   <tr
                     key={p.id}
                     onClick={() => navigate(`/products/${p.id}`)}
