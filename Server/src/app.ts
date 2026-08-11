@@ -14,8 +14,19 @@ import { checkPermission } from './middlewares/permission.middleware';
 const app = express();
 
 app.use(helmet());
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:3000', 'https://sangamone8crm.onrender.com'];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (Postman, mobile apps, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
