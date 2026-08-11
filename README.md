@@ -12,7 +12,7 @@
 ![TypeScript](https://img.shields.io/badge/typescript-5-blue)
 ![PostgreSQL](https://img.shields.io/badge/postgresql-14%2B-blue)
 ![React](https://img.shields.io/badge/react-19-61DAFB)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
 
 ---
 
@@ -564,7 +564,8 @@ A: Not currently — it's single-tenant, single-company per deployment.
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — feel free to use, modify, and distribute with attribution.
+This project is for educational and demonstration purposes only.
+feel free to use, modify, and distribute with attribution.
 
 ---
 
