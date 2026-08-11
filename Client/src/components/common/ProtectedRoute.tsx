@@ -34,7 +34,33 @@ interface Props {
 const ProtectedRoute = ({ children, permissionKey }: Props) => {
   const { user, loading } = useAuth();
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0F172A',
+        color: '#94A3B8',
+        fontSize: '15px',
+        fontWeight: 500
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner" style={{
+            width: '32px',
+            height: '32px',
+            border: '3px solid rgba(255,255,255,0.1)',
+            borderTopColor: '#38BDF8',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+            margin: '0 auto 12px auto'
+          }} />
+          Loading One8 CRM...
+        </div>
+      </div>
+    );
+  }
   if (!user) return <Navigate to="/login" replace />;
 
   if (permissionKey && !hasPermission(user, permissionKey)) {
