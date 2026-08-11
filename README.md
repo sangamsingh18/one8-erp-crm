@@ -38,7 +38,7 @@ The system enforces **JWT-based authentication** and a **dual-layer permission m
 | Runtime | Node.js 20+ |
 | Framework | Express 4 |
 | Language | TypeScript 5 |
-| Database | PostgreSQL 14+ (hosted on Supabase) |
+| Database | PostgreSQL 14+ |
 | Auth | JSON Web Tokens (JWT) via `jsonwebtoken` |
 | Password Hashing | `bcryptjs` |
 | Validation | `express-validator` |
@@ -325,7 +325,6 @@ Import `postman/ERP-CRM.postman_collection.json` into Postman.
 
 ## 📄 License
 
-This project is intended for demonstration and portfolio purposes.
 
 ---
 
