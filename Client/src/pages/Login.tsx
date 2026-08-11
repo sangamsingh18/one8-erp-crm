@@ -76,10 +76,20 @@ const Login = () => {
     } catch (err: any) {
       const responseData = err?.response?.data;
       const msg = responseData?.message ?? '';
-      
-      if (msg.includes('inactive')) {
+
+      if (!err?.response) {
+        // Network error or CORS block — no response received
+        setError('Unable to reach the server. Please check your connection or try again later.');
+      } else if (msg.includes('inactive')) {
         setError('Your account is currently inactive. Please contact an administrator.');
-      } else if (msg.toLowerCase().includes('credential') || msg.toLowerCase().includes('password') || msg.toLowerCase().includes('email') || msg.toLowerCase().includes('user')) {
+      } else if (
+        msg.toLowerCase().includes('credential') ||
+        msg.toLowerCase().includes('password') ||
+        msg.toLowerCase().includes('email') ||
+        msg.toLowerCase().includes('user') ||
+        msg.toLowerCase().includes('invalid') ||
+        err?.response?.status === 401
+      ) {
         setError('Invalid email or password. Please check your credentials and try again.');
       } else {
         setError('Unable to login. Please try again later.');
