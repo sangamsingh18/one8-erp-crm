@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import Login from './pages/Login';
@@ -125,6 +126,7 @@ const App = () => (
     </BrowserRouter>
     </NotificationProvider>
   </AuthProvider>
+</ErrorBoundary>
 );
 
 export default App;

@@ -32,8 +32,16 @@ const Customers = () => {
     setLoading(true);
     try {
       const res = await customersApi.list({ page, limit: 20, search: search || undefined, status: status || undefined });
-      setCustomers(res.data.data);
-      setMeta({ page: res.data.meta.page, totalPages: res.data.meta.totalPages, total: res.data.meta.total });
+      if (res?.data?.data) {
+        setCustomers(res.data.data);
+        setMeta({ 
+          page: res.data.meta?.page || 1, 
+          totalPages: res.data.meta?.totalPages || 1, 
+          total: res.data.meta?.total || 0 
+        });
+      }
+    } catch {
+      setToast({ message: 'Failed to load customers. Please check connection.', type: 'error' });
     } finally { setLoading(false); }
   }, [search, status]);
 
@@ -175,7 +183,7 @@ const Customers = () => {
                     </td>
                   </tr>
                 )}
-                {customers.map(c => (
+                {Array.isArray(customers) && customers.map(c => (
                   <tr
                     key={c.id}
                     onClick={() => navigate(`/customers/${c.id}`)}
