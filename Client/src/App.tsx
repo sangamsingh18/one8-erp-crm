@@ -28,8 +28,9 @@ import Landing from './pages/Landing';
 import './index.css';
 
 const App = () => (
-  <AuthProvider>
-    <NotificationProvider>
+  <ErrorBoundary>
+    <AuthProvider>
+      <NotificationProvider>
       <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
