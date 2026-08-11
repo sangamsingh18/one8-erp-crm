@@ -13,7 +13,15 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    // Restore user immediately from localStorage — prevents white screen on refresh
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
@@ -23,10 +31,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .then(res => {
           const u = res.data.data;
           setUser(u);
+          localStorage.setItem('user', JSON.stringify(u));
         })
         .catch(() => {
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
           setToken(null);
+          setUser(null);
         })
         .finally(() => setLoading(false));
     } else {
