@@ -14,7 +14,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
-    // Restore user immediately from localStorage — prevents white screen on refresh
     try {
       const stored = localStorage.getItem('user');
       return stored ? JSON.parse(stored) : null;
@@ -23,7 +22,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   });
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(() => {
+    // If token and user exist in localStorage, don't block render with loading=true
+    const hasToken = Boolean(localStorage.getItem('token'));
+    const hasUser = Boolean(localStorage.getItem('user'));
+    return !(hasToken && hasUser);
+  });
 
   useEffect(() => {
     if (token) {
