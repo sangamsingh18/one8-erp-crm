@@ -8,12 +8,15 @@ export const createProductValidation = [
     .trim()
     .notEmpty().withMessage('SKU is required.'),
   body('unit_price')
+    .toFloat()
     .isFloat({ min: 0 }).withMessage('Please enter a valid unit price.'),
   body('current_stock')
     .optional()
+    .toInt()
     .isInt({ min: 0 }).withMessage('Stock quantity cannot be negative.'),
   body('min_stock_alert')
     .optional()
+    .toInt()
     .isInt({ min: 0 }).withMessage('Minimum stock quantity cannot be negative.'),
 ];
 
@@ -24,14 +27,17 @@ export const updateProductValidation = [
     .notEmpty().withMessage('Product name is required.'),
   body('unit_price')
     .optional()
+    .toFloat()
     .isFloat({ min: 0 }).withMessage('Please enter a valid unit price.'),
   body('min_stock_alert')
     .optional()
+    .toInt()
     .isInt({ min: 0 }).withMessage('Minimum stock quantity cannot be negative.'),
 ];
 
 export const stockAdjustValidation = [
   body('quantity')
+    .toInt()
     .isInt({ min: 1 }).withMessage('Quantity must be greater than 0.'),
   body('movement_type')
     .isIn(['IN', 'OUT']).withMessage('Invalid movement type.'),
